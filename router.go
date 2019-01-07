@@ -3,13 +3,14 @@ package tgbothelper
 import (
 	"regexp"
 	"strings"
+	"time"
 )
 
-type routeCallback func(lastMessage *MessageData)
+type routeCallback func(message *MessageData)
 
 type route struct {
 	comand       string
-	queryData    []byte
+	buttonText   string
 	containText  string
 	pregTemplate string
 	callback     routeCallback
@@ -21,18 +22,18 @@ type RouteGroup struct {
 	callback chan routeCallback
 }
 
-func (r *route) check(lastMessage *MessageData, callback chan routeCallback) {
-	if update.CallbackQuery != nil && len(r.queryData) > 0 &&
-		string(r.queryData) == string(update.CallbackQuery.Data) {
+func (r *route) check(message *MessageData, callback chan routeCallback) {
+	if r.buttonText != "" &&
+		message.Buttons.GetButtonByText(r.buttonText) != nil {
 		callback <- r.callback
 		return
 	}
 
-	if update.Message == nil {
+	context := message.Message
+	if context == "" {
 		return
 	}
 
-	context := update.Message.Text
 	if r.comand != "" && r.comand == context {
 		callback <- r.callback
 		return
@@ -51,22 +52,45 @@ func (r *route) check(lastMessage *MessageData, callback chan routeCallback) {
 	}
 }
 
-// AddQueryRoute - роутер для Callback запросов
-func (rg *RouteGroup) AddQueryRoute(data []byte, callback routeCallback) {
-	rg.routes = append(rg.routes, route{queryData: data, callback: callback})
+// AddContainButtonRoute - проверка наличия кнопки с указанным текстом
+func (rg *RouteGroup) AddContainButtonRoute(buttonText string, callback routeCallback) {
+	rg.routes = append(rg.routes, route{buttonText: buttonText, callback: callback})
 }
 
-// AddCommandRoute - роутер для простой команды
-func (rg *RouteGroup) AddCommandRoute(comand string, callback routeCallback) {
+// AddEqualTextRoute - проверка наличия эквиваленого текста
+func (rg *RouteGroup) AddEqualTextRoute(comand string, callback routeCallback) {
 	rg.routes = append(rg.routes, route{comand: comand, callback: callback})
 }
 
-// AddContainRoute - роутер с проверкой содержания текста
-func (rg *RouteGroup) AddContainRoute(containText string, callback routeCallback) {
+// AddContainTextRoute - проверка на вхождение текста
+func (rg *RouteGroup) AddContainTextRoute(containText string, callback routeCallback) {
 	rg.routes = append(rg.routes, route{containText: containText, callback: callback})
 }
 
-// AddPregRoute - роутер с проверкой гегулярного выражения
-func (rg *RouteGroup) AddPregRoute(pregTemplate string, callback routeCallback) {
+// AddPregTextRoute - проверка текста сообщения по регуляному выражению
+func (rg *RouteGroup) AddPregTextRoute(pregTemplate string, callback routeCallback) {
 	rg.routes = append(rg.routes, route{pregTemplate: pregTemplate, callback: callback})
+}
+
+// Run - запуск роутера
+func (rg *RouteGroup) Run(message *MessageData) {
+	rg.callback = make(chan routeCallback)
+	for _, rt := range rg.routes {
+		go func(message *MessageData, rt route, callback chan routeCallback) {
+			rt.check(message, callback)
+		}(message, rt, rg.callback)
+	}
+
+	go func(rg *RouteGroup) {
+		select {
+		case fn := <-rg.callback:
+			fn(message)
+		case <-time.NewTicker(time.Second).C:
+		}
+	}(rg)
+}
+
+// NewRouteGroup - создает новую группу роутов
+func NewRouteGroup() *RouteGroup {
+	return &RouteGroup{}
 }

@@ -2,6 +2,7 @@ package tgbothelper
 
 import (
 	"fmt"
+	"strings"
 
 	tdlib "github.com/Arman92/go-tdlib"
 )
@@ -11,7 +12,10 @@ var lastMessage *MessageData
 // ParseMessage парсинг содержимого сообщения
 func ParseMessage(message *tdlib.UpdateNewMessage) {
 	lastMessage = &MessageData{
+		ChatID:              message.Message.ChatID,
+		MessageID:           message.Message.ID,
 		Message:             getText(message),
+		Buttons:             *NewButtonList(message.Message.ReplyMarkup, message.Message.ChatID, message.Message.ID),
 		ButtonsShowKeyboard: getButtonsShowKeyboard(message.Message.ReplyMarkup),
 	}
 }
@@ -25,7 +29,10 @@ func GetLastMessage(client *tdlib.Client, chatID int64) *MessageData {
 		}
 
 		lastMessage = &MessageData{
+			ChatID:              chatID,
+			MessageID:           chat.LastMessage.ID,
 			Message:             getTextContent(chat.LastMessage.Content),
+			Buttons:             *NewButtonList(chat.LastMessage.ReplyMarkup, chatID, chat.LastMessage.ID),
 			ButtonsShowKeyboard: getButtonsShowKeyboard(chat.LastMessage.ReplyMarkup),
 		}
 
@@ -37,10 +44,23 @@ func GetLastMessage(client *tdlib.Client, chatID int64) *MessageData {
 
 // MessageData данные сообщения
 type MessageData struct {
-	Message               string
-	ButtonsShowKeyboard   []string
-	InlineButtons         []string
-	CallbackInlineButtons []string
+	ChatID              int64
+	MessageID           int64
+	Message             string
+	Buttons             ButtonList
+	ButtonsShowKeyboard []string
+}
+
+func (md *MessageData) ContainText(text string) bool {
+	return strings.Contains(md.Message, text)
+}
+
+func (md *MessageData) SendMessage(text string) {
+
+}
+
+func (md *MessageData) ReplyMessage(text string) {
+
 }
 
 func getText(message *tdlib.UpdateNewMessage) string {
@@ -78,7 +98,7 @@ func getButtonsShowKeyboard(reply tdlib.ReplyMarkup) []string {
 }
 
 func getButtonsInlineKeyboard(reply tdlib.ReplyMarkup) []string {
-
+	return []string{}
 }
 
 func getTextContent(content tdlib.MessageContent) string {

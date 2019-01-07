@@ -2,10 +2,12 @@ package tgbothelper
 
 import tdlib "github.com/Arman92/go-tdlib"
 
+// ButtonList - список кнопок
 type ButtonList struct {
 	buttons []Button
 }
 
+// Add - добавить кнопку  список
 func (bl *ButtonList) Add(button Button) {
 	if bl.buttons == nil {
 		bl.buttons = []Button{}
@@ -14,48 +16,81 @@ func (bl *ButtonList) Add(button Button) {
 	bl.buttons = append(bl.buttons, button)
 }
 
+func (bl *ButtonList) getButtonsType(buttonType string) *ButtonList {
+	newBL := &ButtonList{}
+	for _, button := range bl.buttons {
+		if button.GetType() == buttonType {
+			newBL.Add(button)
+		}
+	}
+
+	return newBL
+}
+
+// GetShowKeybordButtons - список кнопок клавиатуры
 func (bl *ButtonList) GetShowKeybordButtons() *ButtonList {
-	newBL := &ButtonList{}
-	for _, button := range bl.buttons {
-		if button.GetType() == ShowKeyboardButtonType {
-			newBL.Add(button)
-		}
-	}
-
-	return newBL
+	return bl.getButtonsType(ShowKeyboardButtonType)
 }
 
+// GetInlineButtons - список inline кнопок
 func (bl *ButtonList) GetInlineButtons() *ButtonList {
-	newBL := &ButtonList{}
-	for _, button := range bl.buttons {
-		if button.GetType() == InlineButtonType {
-			newBL.Add(button)
-		}
-	}
-
-	return newBL
+	return bl.getButtonsType(InlineButtonType)
 }
 
+// GetCallbackButtons - список callback кнопок
 func (bl *ButtonList) GetCallbackButtons() *ButtonList {
-	newBL := &ButtonList{}
+	return bl.getButtonsType(CallbackButtonType)
+}
+
+// GetButtonByText - возвращает кнопку по тексту
+func (bl *ButtonList) GetButtonByText(text string) *Button {
 	for _, button := range bl.buttons {
-		if button.GetType() == CallbackButtonType {
-			newBL.Add(button)
+		if button.GetText() == text {
+			return &button
 		}
 	}
 
-	return newBL
+	return nil
 }
 
-func (bl *ButtonList) GetButtonByText(text string) Button {
-	return &baseButton{}
+// GetButtonByData - возвращает кноку по данным для callback вызова
+func (bl *ButtonList) GetButtonByData(data string) *Button {
+	for _, button := range bl.buttons {
+		if button.GetData() == data {
+			return &button
+		}
+	}
+
+	return nil
 }
 
-func (bl *ButtonList) GetButtonByData(data string) Button {
-	return &baseButton{}
+func (bl *ButtonList) hasButtonType(buttonType string) bool {
+	for _, button := range bl.buttons {
+		if button.GetType() == buttonType {
+			return true
+		}
+	}
+
+	return false
 }
 
-func NewButtonList(reply tdlib.ReplyMarkup) *ButtonList {
+// HasCallbackButton - наличие callback кнопок
+func (bl *ButtonList) HasCallbackButton() bool {
+	return bl.hasButtonType(CallbackButtonType)
+}
+
+// HasInlineButton - наличие inline кнопок
+func (bl *ButtonList) HasInlineButton() bool {
+	return bl.hasButtonType(InlineButtonType)
+}
+
+// HasShowKeyboardButton - наличие кнопок кливиатуры
+func (bl *ButtonList) HasShowKeyboardButton() bool {
+	return bl.hasButtonType(ShowKeyboardButtonType)
+}
+
+// NewButtonList - новый список кнопок из сообщения
+func NewButtonList(reply tdlib.ReplyMarkup, chatID, messageID int64) *ButtonList {
 	bl := &ButtonList{}
 	if reply == nil {
 		return bl
@@ -65,8 +100,31 @@ func NewButtonList(reply tdlib.ReplyMarkup) *ButtonList {
 		replyKeyboard := reply.(*tdlib.ReplyMarkupInlineKeyboard)
 		for _, row := range replyKeyboard.Rows {
 			for _, button := range row {
-				//button.Type.GetInlineKeyboardButtonTypeEnum() == tdlib.InlineKeyboardButtonTypeCallbackType{}
+				if button.Type.GetInlineKeyboardButtonTypeEnum() == tdlib.InlineKeyboardButtonTypeCallbackType {
+					btCallback := button.Type.(*tdlib.InlineKeyboardButtonTypeCallback)
+					bl.Add(
+						newCallbackButton(
+							button.Text,
+							string(btCallback.Data),
+							chatID,
+							messageID,
+						),
+					)
+					continue
+				}
 
+				bl.Add(newInlineButton(button.Text, ""))
+				continue
+			}
+
+		}
+	}
+
+	if reply.GetReplyMarkupEnum() == tdlib.ReplyMarkupShowKeyboardType {
+		replyKeyboard := reply.(*tdlib.ReplyMarkupShowKeyboard)
+		for _, row := range replyKeyboard.Rows {
+			for _, button := range row {
+				bl.Add(newShowKeyboardButton(button.Text))
 			}
 		}
 	}
