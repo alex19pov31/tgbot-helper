@@ -16,6 +16,7 @@ var haveFullChatList bool
 var accountName string
 var configPath string
 
+// ProxySocks5 - настройка прокси socks5
 type ProxySocks5 struct {
 	Server   string `json:"server"`
 	Port     int32  `json:"port"`
@@ -23,31 +24,35 @@ type ProxySocks5 struct {
 	Password string `json:"password"`
 }
 
-type ProxyHttp struct {
+// ProxyHTTP - настройка http прокси
+type ProxyHTTP struct {
 	Server   string `json:"server"`
 	Port     int32  `json:"port"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	UseHttp  bool   `json:"use_http"`
+	UseHTTP  bool   `json:"use_http"`
 }
 
+// ProxyMtproto - настройка mtproto прокси
 type ProxyMtproto struct {
 	Server string `json:"server"`
 	Port   int32  `json:"port"`
 	Secret string `json:"secret"`
 }
 
+// Client - клиент telegram user api
 type Client struct {
 	client       *tdlib.Client
 	APIID        string
 	APIHash      string
 	accountName  string
 	proxySocks5  *ProxySocks5
-	proxyHttp    *ProxyHttp
+	proxyHTTP    *ProxyHTTP
 	proxyMtproto *ProxyMtproto
 	allChats     []*tdlib.Chat
 }
 
+// SetSocks5Proxy - применить socks5 прокси
 func (c *Client) SetSocks5Proxy(server string, port int32, username, password string) {
 	c.proxySocks5 = &ProxySocks5{
 		Server:   server,
@@ -57,16 +62,18 @@ func (c *Client) SetSocks5Proxy(server string, port int32, username, password st
 	}
 }
 
-func (c *Client) SetHttpProxy(server string, port int32, username, password string, useHttp bool) {
-	c.proxyHttp = &ProxyHttp{
+// SetHTTPProxy - применить http прокси
+func (c *Client) SetHTTPProxy(server string, port int32, username, password string, useHTTP bool) {
+	c.proxyHTTP = &ProxyHTTP{
 		Server:   server,
 		Port:     port,
 		Username: username,
 		Password: password,
-		UseHttp:  useHttp,
+		UseHTTP:  useHTTP,
 	}
 }
 
+// SetMtprotoProxy - применить mtproxy прокси
 func (c *Client) SetMtprotoProxy(server string, port int32, secret string) {
 	c.proxyMtproto = &ProxyMtproto{
 		Server: server,
@@ -100,8 +107,8 @@ func (c *Client) getClient() *tdlib.Client {
 	if c.proxySocks5 != nil && c.proxySocks5.Server != "" && c.proxySocks5.Port > 0 {
 		curClient.AddProxy(c.proxySocks5.Server, c.proxySocks5.Port, true, tdlib.NewProxyTypeSocks5(c.proxySocks5.Username, c.proxySocks5.Password))
 	}
-	if c.proxyHttp != nil && c.proxyHttp.Server != "" && c.proxyHttp.Port > 0 {
-		curClient.AddProxy(c.proxyHttp.Server, c.proxyHttp.Port, true, tdlib.NewProxyTypeHttp(c.proxyHttp.Username, c.proxyHttp.Password, c.proxyHttp.UseHttp))
+	if c.proxyHTTP != nil && c.proxyHTTP.Server != "" && c.proxyHTTP.Port > 0 {
+		curClient.AddProxy(c.proxyHTTP.Server, c.proxyHTTP.Port, true, tdlib.NewProxyTypeHttp(c.proxyHTTP.Username, c.proxyHTTP.Password, c.proxyHTTP.UseHTTP))
 	}
 	if c.proxyMtproto != nil && c.proxyMtproto.Server != "" && c.proxyMtproto.Port > 0 {
 		curClient.AddProxy(c.proxyMtproto.Server, c.proxyMtproto.Port, true, tdlib.NewProxyTypeMtproto(c.proxyMtproto.Secret))
@@ -110,6 +117,7 @@ func (c *Client) getClient() *tdlib.Client {
 	return curClient
 }
 
+// GetClient - telegram клиент
 func (c *Client) GetClient() *tdlib.Client {
 	currentState, _ := c.getClient().Authorize()
 	for ; currentState.GetAuthorizationStateEnum() != tdlib.AuthorizationStateReadyType; currentState, _ = c.getClient().Authorize() {

@@ -51,16 +51,19 @@ type MessageData struct {
 	ButtonsShowKeyboard []string
 }
 
+// ContainText - наличие указанного текста в сообщении
 func (md *MessageData) ContainText(text string) bool {
 	return strings.Contains(md.Message, text)
 }
 
-func (md *MessageData) SendMessage(text string) {
-
+// SendMessage - отправка сообщения
+func (md *MessageData) SendMessage(client *tdlib.Client, text string) {
+	SendMessage(client, text, md.ChatID, 0)
 }
 
-func (md *MessageData) ReplyMessage(text string) {
-
+// ReplyMessage - ответ на сообщение
+func (md *MessageData) ReplyMessage(client *tdlib.Client, text string) {
+	SendMessage(client, text, md.ChatID, md.MessageID)
 }
 
 func getText(message *tdlib.UpdateNewMessage) string {

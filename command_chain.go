@@ -9,7 +9,8 @@ import (
 
 var lastCommandChain = &CommandChain{}
 
-type chainElement struct {
+// СhainElement - элемент цепочки команд
+type СhainElement struct {
 	command       string
 	containText   string
 	containButton string
@@ -18,7 +19,7 @@ type chainElement struct {
 	timeSend      time.Time
 }
 
-func (ce *chainElement) isValid(text string, buttons ButtonList) bool {
+func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
 	if ce.countSend > 0 || ce.countSkeep > 0 {
 		return false
 	}
@@ -34,7 +35,7 @@ func (ce *chainElement) isValid(text string, buttons ButtonList) bool {
 	return true
 }
 
-func (ce *chainElement) run(client *tdlib.Client, text string, message *MessageData) bool {
+func (ce *СhainElement) run(client *tdlib.Client, text string, message *MessageData) bool {
 	if !ce.isValid(text, message.Buttons) {
 		ce.countSkeep++
 		return false
@@ -47,19 +48,21 @@ func (ce *chainElement) run(client *tdlib.Client, text string, message *MessageD
 	return true
 }
 
-func (ce *chainElement) forseRun(client *tdlib.Client, chatID int64) {
+func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) {
 	SendCommand(client, ce.command, chatID)
 	ce.countSend++
 	ce.timeSend = time.Now()
 }
 
+// CommandChain - цепочка команд
 type CommandChain struct {
 	id       string
-	commands []*chainElement
+	commands []*СhainElement
 	finished bool
 	created  time.Time
 }
 
+// Run - запуск цепочки команд
 func (ch *CommandChain) Run(client *tdlib.Client, text string, message *MessageData) bool {
 	if ch.finished {
 		return false
@@ -68,7 +71,6 @@ func (ch *CommandChain) Run(client *tdlib.Client, text string, message *MessageD
 	for _, command := range ch.commands {
 		if command.run(client, text, message) {
 			return true
-		} else {
 		}
 	}
 
@@ -76,6 +78,7 @@ func (ch *CommandChain) Run(client *tdlib.Client, text string, message *MessageD
 	return false
 }
 
+// ForseRun - принудительный запус команд
 func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) {
 	if ch.finished {
 		return
@@ -87,22 +90,26 @@ func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) {
 	}
 }
 
+// GetCommandChain - текущая цепочка команд
 func GetCommandChain() *CommandChain {
 	return lastCommandChain
 }
 
-func NewCommandChain(id string, commands ...*chainElement) *CommandChain {
+// NewCommandChain - новая цепочка команд
+func NewCommandChain(id string, commands ...*СhainElement) *CommandChain {
 	lastCommandChain = &CommandChain{id: id, commands: commands, created: time.Now()}
 
 	return lastCommandChain
 }
 
-func NewCommandButton(button string) *chainElement {
-	return &chainElement{command: button, containButton: button}
+// NewCommandButton - новый элемент цепочки команд (нажатие на кнопку)
+func NewCommandButton(button string) *СhainElement {
+	return &СhainElement{command: button, containButton: button}
 }
 
-func NewCommandMessage(message string) *chainElement {
-	return &chainElement{command: message, containText: message}
+// NewCommandMessage - новый элемент цепочки команд (отправка команды)
+func NewCommandMessage(message string) *СhainElement {
+	return &СhainElement{command: message, containText: message}
 }
 
 /*func ForwardMessage(chatID int64, messgesID []int64) {

@@ -4,10 +4,16 @@ import (
 	"github.com/Arman92/go-tdlib"
 )
 
+// ShowKeyboardButtonType - клавиатурные кнопки
 const ShowKeyboardButtonType = "ShowKeyboardButton"
+
+// InlineButtonType - инлайновые кнопки
 const InlineButtonType = "InlineButton"
+
+// CallbackButtonType - кнопки с обработкой callback запросов
 const CallbackButtonType = "CallbackButton"
 
+// Button - интерфейс кнопки
 type Button interface {
 	GetData() string
 	GetText() string
@@ -55,18 +61,22 @@ func (b *baseButton) Click(client *tdlib.Client) {
 	SendMessage(client, b.GetText(), b.GetChatID(), 0)
 }
 
+// ShowKeyboardButton - клавиатурная кнопка
 type ShowKeyboardButton struct {
 	baseButton
 }
 
+// InlineButton - инлайновая кнопка
 type InlineButton struct {
 	baseButton
 }
 
+// CallbackButton - кнопка с обработкой callback запроса
 type CallbackButton struct {
 	baseButton
 }
 
+// Click - клик по кнопке
 func (cb *CallbackButton) Click(client *tdlib.Client) {
 	client.GetCallbackQueryAnswer(
 		cb.GetChatID(),
