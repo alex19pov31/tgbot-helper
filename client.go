@@ -48,6 +48,33 @@ type Client struct {
 	allChats     []*tdlib.Chat
 }
 
+func (c *Client) SetSocks5Proxy(server string, port int32, username, password string) {
+	c.proxySocks5 = &ProxySocks5{
+		Server:   server,
+		Port:     port,
+		Username: username,
+		Password: password,
+	}
+}
+
+func (c *Client) SetHttpProxy(server string, port int32, username, password string, useHttp bool) {
+	c.proxyHttp = &ProxyHttp{
+		Server:   server,
+		Port:     port,
+		Username: username,
+		Password: password,
+		UseHttp:  useHttp,
+	}
+}
+
+func (c *Client) SetMtprotoProxy(server string, port int32, secret string) {
+	c.proxyMtproto = &ProxyMtproto{
+		Server: server,
+		Port:   port,
+		Secret: secret,
+	}
+}
+
 func (c *Client) getClient() *tdlib.Client {
 	if c.client != nil {
 		return c.client

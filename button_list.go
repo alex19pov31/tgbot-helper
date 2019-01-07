@@ -54,9 +54,9 @@ func (bl *ButtonList) GetButtonByText(text string) *Button {
 }
 
 // GetButtonByData - возвращает кноку по данным для callback вызова
-func (bl *ButtonList) GetButtonByData(data string) *Button {
+func (bl *ButtonList) GetButtonByData(data []byte) *Button {
 	for _, button := range bl.buttons {
-		if button.GetData() == data {
+		if string(button.GetData()) == string(data) {
 			return &button
 		}
 	}
@@ -113,7 +113,7 @@ func NewButtonList(reply tdlib.ReplyMarkup, chatID, messageID int64) *ButtonList
 					continue
 				}
 
-				bl.Add(newInlineButton(button.Text, ""))
+				bl.Add(newInlineButton(button.Text, "", chatID, messageID))
 				continue
 			}
 
@@ -124,7 +124,7 @@ func NewButtonList(reply tdlib.ReplyMarkup, chatID, messageID int64) *ButtonList
 		replyKeyboard := reply.(*tdlib.ReplyMarkupShowKeyboard)
 		for _, row := range replyKeyboard.Rows {
 			for _, button := range row {
-				bl.Add(newShowKeyboardButton(button.Text))
+				bl.Add(newShowKeyboardButton(button.Text, chatID, messageID))
 			}
 		}
 	}

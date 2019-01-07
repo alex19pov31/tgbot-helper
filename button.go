@@ -1,7 +1,7 @@
 package tgbothelper
 
 import (
-	"fmt"
+	"github.com/Arman92/go-tdlib"
 )
 
 const ShowKeyboardButtonType = "ShowKeyboardButton"
@@ -12,7 +12,9 @@ type Button interface {
 	GetData() string
 	GetText() string
 	GetType() string
-	Click()
+	GetChatID() int64
+	GetMessageID() int64
+	Click(client *tdlib.Client)
 }
 
 type baseButton struct {
@@ -41,8 +43,16 @@ func (b *baseButton) GetType() string {
 	return b.typeButton
 }
 
-func (b *baseButton) Click() {
-	fmt.Println("Clicked on " + b.GetData() + " button")
+func (b *baseButton) GetChatID() int64 {
+	return b.chatID
+}
+
+func (b *baseButton) GetMessageID() int64 {
+	return b.messageID
+}
+
+func (b *baseButton) Click(client *tdlib.Client) {
+	SendMessage(client, b.GetText(), b.GetChatID(), 0)
 }
 
 type ShowKeyboardButton struct {
@@ -57,14 +67,22 @@ type CallbackButton struct {
 	baseButton
 }
 
-func newShowKeyboardButton(text string) *ShowKeyboardButton {
+func (cb *CallbackButton) Click(client *tdlib.Client) {
+	client.GetCallbackQueryAnswer(
+		cb.GetChatID(),
+		cb.GetMessageID(),
+		tdlib.NewCallbackQueryPayloadData([]byte(cb.GetData())),
+	)
+}
+
+func newShowKeyboardButton(text string, chatID, messageID int64) *ShowKeyboardButton {
 	button := &ShowKeyboardButton{}
 	button.Init(text, "", ShowKeyboardButtonType)
 
 	return button
 }
 
-func newInlineButton(text, data string) *InlineButton {
+func newInlineButton(text, data string, chatID, messageID int64) *InlineButton {
 	button := &InlineButton{}
 	button.Init(text, data, InlineButtonType)
 
