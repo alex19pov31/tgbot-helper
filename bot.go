@@ -15,7 +15,7 @@ type BotTimerFunc func(t time.Time)
 type Bot struct {
 	client       *Client
 	message      *MessageData
-	command      *command
+	command      *Command
 	commandChain *CommandChain
 	initRoute    routeCallback
 	initTime     BotTimerFunc
@@ -29,7 +29,7 @@ func (b *Bot) init(APIID, APIHash, accountName string) {
 	}
 
 	b.message = &MessageData{}
-	b.command = &command{}
+	b.command = &Command{}
 	b.commandChain = &CommandChain{}
 }
 
@@ -74,15 +74,31 @@ func (b *Bot) startBot(chBot chan *MessageData) {
 	}
 }
 
+// SendMessage -  отправить сообщение
+func (b *Bot) SendCommand(text string, chatID, messageID int64) {
+	if b.command.isLock() {
+		return
+	}
+
+	b.command.request = text
+	b.command.response = ""
+	b.command.timeSend = time.Now()
+	b.command.chatID = chatID
+	b.command.forwardMessageID = messageID
+	SendMessage(b.GetClient(), text, chatID, messageID)
+}
+
+// GetClient - tg user api клиент
 func (b *Bot) GetClient() *tdlib.Client {
 	return b.client.GetClient()
 }
 
+// GetMessage - данные сообщения
 func (b *Bot) GetMessage() *MessageData {
 	return b.message
 }
 
-func (b *Bot) GetCommand() *command {
+func (b *Bot) GetCommand() *Command {
 	return b.command
 }
 
@@ -90,6 +106,12 @@ func (b *Bot) GetCommandChain() *CommandChain {
 	return b.commandChain
 }
 
+func (b *Bot) NewCommandChain(id string, commands ...*СhainElement) *CommandChain {
+	b.commandChain = &CommandChain{id: id, commands: commands, created: time.Now()}
+	return b.commandChain
+}
+
+// NewBot - новый бот
 func NewBot(APIID, APIHash, accountName string, initRoute routeCallback, initTime BotTimerFunc) *Bot {
 	bot := Bot{}
 	bot.init(APIID, APIHash, accountName)

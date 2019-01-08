@@ -6,16 +6,18 @@ import (
 	"github.com/Arman92/go-tdlib"
 )
 
-var lastCommand = &command{}
+var lastCommand = &Command{}
 
-type command struct {
-	request   string
-	response  string
-	timeSend  time.Time
-	lockUntil time.Time
+type Command struct {
+	request          string
+	response         string
+	chatID           int64
+	forwardMessageID int64
+	timeSend         time.Time
+	lockUntil        time.Time
 }
 
-func (c *command) isLock() bool {
+func (c *Command) isLock() bool {
 	return c.lockUntil.Unix() > time.Now().Unix()
 }
 

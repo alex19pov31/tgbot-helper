@@ -1,7 +1,6 @@
 package tgbothelper
 
 import (
-	"fmt"
 	"strings"
 
 	tdlib "github.com/Arman92/go-tdlib"
@@ -35,8 +34,6 @@ func GetLastMessage(client *tdlib.Client, chatID int64) *MessageData {
 			Buttons:             *NewButtonList(chat.LastMessage.ReplyMarkup, chatID, chat.LastMessage.ID),
 			ButtonsShowKeyboard: getButtonsShowKeyboard(chat.LastMessage.ReplyMarkup),
 		}
-
-		fmt.Println("LAST MESSAGE:", lastMessage)
 	}
 
 	return lastMessage
