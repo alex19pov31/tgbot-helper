@@ -1,7 +1,6 @@
 package tgbothelper
 
 import (
-	"cw_bot/helpers"
 	"os"
 	"os/signal"
 	"syscall"
@@ -67,7 +66,7 @@ func (b *Bot) startBot(chBot chan *MessageData) {
 		return true
 	}
 
-	receiver := helpers.GetClient().AddEventReceiver(&tdlib.UpdateNewMessage{}, eventFilter, 10)
+	receiver := b.client.GetClient().AddEventReceiver(&tdlib.UpdateNewMessage{}, eventFilter, 10)
 	for newMsg := range receiver.Chan {
 		updateMsg := newMsg.(*tdlib.UpdateNewMessage)
 		chBot <- ParseMessage(updateMsg)
