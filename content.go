@@ -10,8 +10,8 @@ import (
 var lastMessage *MessageData
 
 // ParseMessage парсинг содержимого сообщения
-func ParseMessage(message *tdlib.UpdateNewMessage) {
-	lastMessage = &MessageData{
+func ParseMessage(message *tdlib.UpdateNewMessage) *MessageData {
+	return &MessageData{
 		ChatID:              message.Message.ChatID,
 		MessageID:           message.Message.ID,
 		Message:             getText(message),

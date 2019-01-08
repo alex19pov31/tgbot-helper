@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+type causeCallback func(message *MessageData) bool
+
 type routeCallback func(message *MessageData)
 
 type route struct {
@@ -13,6 +15,7 @@ type route struct {
 	buttonText   string
 	containText  string
 	pregTemplate string
+	causeFunc    causeCallback
 	callback     routeCallback
 }
 
@@ -23,6 +26,11 @@ type RouteGroup struct {
 }
 
 func (r *route) check(message *MessageData, callback chan routeCallback) {
+	if r.causeFunc != nil && r.causeFunc(message) {
+		callback <- r.callback
+		return
+	}
+
 	if r.buttonText != "" &&
 		message.Buttons.GetButtonByText(r.buttonText) != nil {
 		callback <- r.callback
@@ -50,6 +58,11 @@ func (r *route) check(message *MessageData, callback chan routeCallback) {
 			return
 		}
 	}
+}
+
+// AddCauseFuncRoute - проверка по функции
+func (rg *RouteGroup) AddCauseFuncRoute(causeCallback causeCallback, callback routeCallback) {
+	rg.routes = append(rg.routes, route{causeFunc: causeCallback, callback: callback})
 }
 
 // AddContainButtonRoute - проверка наличия кнопки с указанным текстом
