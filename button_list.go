@@ -1,10 +1,19 @@
 package tgbothelper
 
-import tdlib "github.com/Arman92/go-tdlib"
+import (
+	"fmt"
+	"strings"
+
+	tdlib "github.com/Arman92/go-tdlib"
+)
 
 // ButtonList - список кнопок
 type ButtonList struct {
 	buttons []Button
+}
+
+func (bl *ButtonList) GetList() []Button {
+	return bl.buttons
 }
 
 // Add - добавить кнопку  список
@@ -53,10 +62,21 @@ func (bl *ButtonList) GetButtonByText(text string) *Button {
 	return nil
 }
 
-// GetButtonByData - возвращает кноку по данным для callback вызова
-func (bl *ButtonList) GetButtonByData(data []byte) *Button {
+// GetButtonByContainText - возвращает кнопку по вхождению текста
+func (bl *ButtonList) GetButtonByContainText(text string) *Button {
 	for _, button := range bl.buttons {
-		if string(button.GetData()) == string(data) {
+		if strings.Contains(button.GetText(), text) {
+			return &button
+		}
+	}
+
+	return nil
+}
+
+// GetButtonByData - возвращает кноку по данным для callback вызова
+func (bl *ButtonList) GetButtonByData(data string) *Button {
+	for _, button := range bl.buttons {
+		if button.GetData() == data {
 			return &button
 		}
 	}
@@ -95,6 +115,8 @@ func NewButtonList(reply tdlib.ReplyMarkup, chatID, messageID int64) *ButtonList
 	if reply == nil {
 		return bl
 	}
+
+	fmt.Println("Set chatID: ", chatID)
 
 	if reply.GetReplyMarkupEnum() == tdlib.ReplyMarkupInlineKeyboardType {
 		replyKeyboard := reply.(*tdlib.ReplyMarkupInlineKeyboard)

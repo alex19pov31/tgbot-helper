@@ -13,6 +13,7 @@ func ParseMessage(message *tdlib.UpdateNewMessage) *MessageData {
 	return &MessageData{
 		ChatID:              message.Message.ChatID,
 		MessageID:           message.Message.ID,
+		SenderID:            message.Message.SenderUserID,
 		Message:             getText(message),
 		Buttons:             *NewButtonList(message.Message.ReplyMarkup, message.Message.ChatID, message.Message.ID),
 		ButtonsShowKeyboard: getButtonsShowKeyboard(message.Message.ReplyMarkup),
@@ -30,6 +31,7 @@ func GetLastMessage(client *tdlib.Client, chatID int64) *MessageData {
 		lastMessage = &MessageData{
 			ChatID:              chatID,
 			MessageID:           chat.LastMessage.ID,
+			SenderID:            chat.LastMessage.SenderUserID,
 			Message:             getTextContent(chat.LastMessage.Content),
 			Buttons:             *NewButtonList(chat.LastMessage.ReplyMarkup, chatID, chat.LastMessage.ID),
 			ButtonsShowKeyboard: getButtonsShowKeyboard(chat.LastMessage.ReplyMarkup),
@@ -39,9 +41,27 @@ func GetLastMessage(client *tdlib.Client, chatID int64) *MessageData {
 	return lastMessage
 }
 
+// GetMessageByID сообщение по идентификатору
+func GetMessageByID(client *tdlib.Client, chatID, messageID int64) *MessageData {
+	message, err := client.GetMessage(chatID, messageID)
+	if err != nil {
+		return nil
+	}
+
+	return &MessageData{
+		ChatID:              chatID,
+		MessageID:           messageID,
+		SenderID:            message.SenderUserID,
+		Message:             getTextContent(message.Content),
+		Buttons:             *NewButtonList(message.ReplyMarkup, chatID, messageID),
+		ButtonsShowKeyboard: getButtonsShowKeyboard(message.ReplyMarkup),
+	}
+}
+
 // MessageData данные сообщения
 type MessageData struct {
 	ChatID              int64
+	SenderID            int32
 	MessageID           int64
 	Message             string
 	Buttons             ButtonList

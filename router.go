@@ -98,6 +98,7 @@ func (rg *RouteGroup) Run(message *MessageData) {
 		select {
 		case fn := <-rg.callback:
 			fn(message)
+			break
 		case <-time.NewTicker(time.Second).C:
 		}
 	}(rg)

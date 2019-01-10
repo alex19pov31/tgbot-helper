@@ -43,6 +43,7 @@ type ProxyMtproto struct {
 // Client - клиент telegram user api
 type Client struct {
 	client       *tdlib.Client
+	booted       bool
 	APIID        string
 	APIHash      string
 	accountName  string
@@ -114,7 +115,8 @@ func (c *Client) getClient() *tdlib.Client {
 		curClient.AddProxy(c.proxyMtproto.Server, c.proxyMtproto.Port, true, tdlib.NewProxyTypeMtproto(c.proxyMtproto.Secret))
 	}
 
-	return curClient
+	c.client = curClient
+	return c.client
 }
 
 // GetClient - telegram клиент

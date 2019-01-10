@@ -31,9 +31,11 @@ type baseButton struct {
 	typeButton string
 }
 
-func (b *baseButton) Init(text, data, typeButton string) {
+func (b *baseButton) Init(text, data, typeButton string, chatID, messageID int64) {
 	b.data = data
 	b.text = text
+	b.chatID = chatID
+	b.messageID = messageID
 	b.typeButton = typeButton
 }
 
@@ -87,21 +89,21 @@ func (cb *CallbackButton) Click(client *tdlib.Client) {
 
 func newShowKeyboardButton(text string, chatID, messageID int64) *ShowKeyboardButton {
 	button := &ShowKeyboardButton{}
-	button.Init(text, "", ShowKeyboardButtonType)
+	button.Init(text, "", ShowKeyboardButtonType, chatID, messageID)
 
 	return button
 }
 
 func newInlineButton(text, data string, chatID, messageID int64) *InlineButton {
 	button := &InlineButton{}
-	button.Init(text, data, InlineButtonType)
+	button.Init(text, data, InlineButtonType, chatID, messageID)
 
 	return button
 }
 
 func newCallbackButton(text, data string, chatID, messageID int64) *CallbackButton {
 	button := &CallbackButton{}
-	button.Init(text, data, CallbackButtonType)
+	button.Init(text, data, CallbackButtonType, chatID, messageID)
 
 	return button
 }

@@ -1,6 +1,7 @@
 package tgbothelper
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,12 +12,19 @@ var lastCommandChain = &CommandChain{}
 
 // СhainElement - элемент цепочки команд
 type СhainElement struct {
-	command       string
-	containText   string
-	containButton string
-	countSend     int
-	countSkeep    int
-	timeSend      time.Time
+	command           string
+	containText       string
+	containButton     string
+	containButtonText string
+	callbackData      string
+	countSend         int
+	countSkeep        int
+	timeSend          time.Time
+	button            *Button
+}
+
+func (ce *СhainElement) isCallback() bool {
+	return ce.callbackData != ""
 }
 
 func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
@@ -28,28 +36,57 @@ func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
 		return false
 	}
 
-	if ce.containButton != "" && buttons.GetButtonByText(ce.containButton) == nil {
-		return false
+	if ce.containButton != "" {
+		ce.button = buttons.GetButtonByText(ce.containButton)
+		if ce.button == nil {
+			return false
+		}
+	}
+
+	if ce.callbackData != "" {
+		ce.button = buttons.GetButtonByText(ce.callbackData)
+		if ce.button == nil {
+			return false
+		}
+	}
+
+	if ce.containButtonText != "" {
+		ce.button = buttons.GetButtonByContainText(ce.containButtonText)
+		if ce.button == nil {
+			return false
+		}
 	}
 
 	return true
 }
 
 func (ce *СhainElement) run(client *tdlib.Client, text string, message *MessageData) bool {
+	fmt.Println("Проверка команды из цепочки:")
+	fmt.Println(ce.command)
 	if !ce.isValid(text, message.Buttons) {
 		ce.countSkeep++
 		return false
 	}
 
-	SendCommand(client, text, message.ChatID)
+	fmt.Println("Отправка команды из цепочки:")
+	fmt.Println(ce.command)
+
+	if ce.button != nil {
+		(*ce.button).Click(client)
+	} else {
+		SendMessage(client, ce.command, message.ChatID, 0)
+	}
+
 	ce.countSend++
 	ce.timeSend = time.Now()
+
+	fmt.Println("Команда отправлена")
 
 	return true
 }
 
 func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) {
-	SendCommand(client, ce.command, chatID)
+	SendMessage(client, ce.command, chatID, 0)
 	ce.countSend++
 	ce.timeSend = time.Now()
 }
@@ -63,20 +100,62 @@ type CommandChain struct {
 }
 
 // Run - запуск цепочки команд
-func (ch *CommandChain) Run(client *tdlib.Client, text string, message *MessageData) bool {
+func (ch *CommandChain) Run(client *tdlib.Client, message *MessageData, initFunc routeCallback) bool {
+	text := message.Message
 	if ch.finished {
 		return false
 	}
 
 	for _, command := range ch.commands {
 		if command.run(client, text, message) {
+			fmt.Println("COMAND SENDED:")
+
+			if command.button != nil && (*command.button).GetType() == CallbackButtonType {
+				fmt.Println("IsCallback!!!")
+				newMessage := GetMessageByID(client, message.ChatID, message.MessageID)
+				fmt.Println("NEW MESSAGE:")
+				fmt.Println(newMessage.Message)
+
+				initFunc(newMessage)
+			}
+
 			return true
 		}
+		fmt.Println("Next command...")
 	}
 
 	ch.finished = true
 	return false
 }
+
+/*
+func (ch *CommandChain) RunCallback(client *tdlib.Client, message *MessageData, initFunc routeCallback) bool {
+	text := message.Message
+	if ch.finished {
+		return false
+	}
+
+	for _, command := range ch.commands {
+		if command.run(client, text, message) {
+			fmt.Println("Command is sended")
+			if command.isCallback() {
+				fmt.Println("IsCallback!!!")
+				time.Sleep(5 * time.Second)
+				newMessage := GetMessageByID(client, message.ChatID, message.MessageID)
+				fmt.Println("NEW MESSAGE:")
+				fmt.Println(newMessage.Message)
+
+				initFunc(newMessage)
+			}
+			return true
+		}
+		fmt.Println("Next command...")
+	}
+
+	ch.finished = true
+	return false
+}
+*/
 
 // ForseRun - принудительный запус команд
 func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) {
@@ -105,6 +184,15 @@ func NewCommandChain(id string, commands ...*СhainElement) *CommandChain {
 // NewCommandButton - новый элемент цепочки команд (нажатие на кнопку)
 func NewCommandButton(button string) *СhainElement {
 	return &СhainElement{command: button, containButton: button}
+}
+
+func NewContainTextButton(button string) *СhainElement {
+	return &СhainElement{containButtonText: button}
+}
+
+// NewCallbackButton - новый элемент цепочки команд (нажатие на кнопку)
+func NewCallbackButton(button string) *СhainElement {
+	return &СhainElement{callbackData: button}
 }
 
 // NewCommandMessage - новый элемент цепочки команд (отправка команды)

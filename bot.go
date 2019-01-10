@@ -10,14 +10,16 @@ import (
 )
 
 type BotTimerFunc func(t time.Time)
+type HandleCallback func()
 
 type Bot struct {
 	client       *Client
 	message      *MessageData
 	command      *Command
 	commandChain *CommandChain
-	initRoute    routeCallback
-	initTime     BotTimerFunc
+	handleBoot   HandleCallback
+	handleRoute  routeCallback
+	handleTimer  BotTimerFunc
 }
 
 func (b *Bot) init(APIID, APIHash, accountName string) {
@@ -30,6 +32,10 @@ func (b *Bot) init(APIID, APIHash, accountName string) {
 	b.message = &MessageData{}
 	b.command = &Command{}
 	b.commandChain = &CommandChain{}
+}
+
+func (b *Bot) SetMessage(message *MessageData) {
+	b.message = message
 }
 
 func (b *Bot) Client() *Client {
@@ -50,23 +56,24 @@ func (b *Bot) Start() {
 	for {
 		select {
 		case botMsg := <-chBot:
-			go b.initRoute(botMsg)
+			go b.handleRoute(botMsg)
 		case t := <-ticker.C:
-			go b.initTime(t)
+			go b.handleTimer(t)
 		case <-ch:
-			b.GetClient().DestroyInstance()
 			os.Exit(1)
+			return
 		}
 	}
 }
 
 func (b *Bot) startBot(chBot chan *MessageData) {
 	b.GetClient()
+	b.handleBoot()
 	eventFilter := func(msg *tdlib.TdMessage) bool {
 		return true
 	}
 
-	receiver := b.client.GetClient().AddEventReceiver(&tdlib.UpdateNewMessage{}, eventFilter, 10)
+	receiver := b.GetClient().AddEventReceiver(&tdlib.UpdateNewMessage{}, eventFilter, 10)
 	for newMsg := range receiver.Chan {
 		updateMsg := newMsg.(*tdlib.UpdateNewMessage)
 		chBot <- ParseMessage(updateMsg)
@@ -110,12 +117,22 @@ func (b *Bot) NewCommandChain(id string, commands ...*СhainElement) *CommandCha
 	return b.commandChain
 }
 
+func (b *Bot) SetHandleRoute(initFunc routeCallback) {
+	b.handleRoute = initFunc
+}
+
+func (b *Bot) SetHandleTimer(timerFunc BotTimerFunc) {
+	b.handleTimer = timerFunc
+}
+
+func (b *Bot) SetHandleBoot(bootFunc HandleCallback) {
+	b.handleBoot = bootFunc
+}
+
 // NewBot - новый бот
-func NewBot(APIID, APIHash, accountName string, initRoute routeCallback, initTime BotTimerFunc) *Bot {
+func NewBot(APIID, APIHash, accountName string) *Bot {
 	bot := Bot{}
 	bot.init(APIID, APIHash, accountName)
-	bot.initRoute = initRoute
-	bot.initTime = initTime
 
 	return &bot
 }

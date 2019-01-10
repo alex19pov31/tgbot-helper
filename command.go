@@ -63,8 +63,9 @@ func SendCommand(client *tdlib.Client, text string, chatID int64) {
 
 // SendMessage отправляет сообщение в указанный чат
 func SendMessage(client *tdlib.Client, text string, chatID, replyMessageID int64) {
-	go func() {
+	go func(client *tdlib.Client, text string, chatID, replyMessageID int64) {
 		inputMsgTxt := tdlib.NewInputMessageText(tdlib.NewFormattedText(text, nil), true, true)
+		time.Sleep(2 * time.Second)
 		client.SendMessage(chatID, replyMessageID, false, true, nil, inputMsgTxt)
-	}()
+	}(client, text, chatID, replyMessageID)
 }
