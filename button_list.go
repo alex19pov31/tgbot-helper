@@ -1,7 +1,6 @@
 package tgbothelper
 
 import (
-	"fmt"
 	"strings"
 
 	tdlib "github.com/Arman92/go-tdlib"
@@ -116,12 +115,14 @@ func NewButtonList(reply tdlib.ReplyMarkup, chatID, messageID int64) *ButtonList
 		return bl
 	}
 
-	fmt.Println("Set chatID: ", chatID)
-
 	if reply.GetReplyMarkupEnum() == tdlib.ReplyMarkupInlineKeyboardType {
 		replyKeyboard := reply.(*tdlib.ReplyMarkupInlineKeyboard)
 		for _, row := range replyKeyboard.Rows {
 			for _, button := range row {
+				if button.Type == nil {
+					continue
+				}
+
 				if button.Type.GetInlineKeyboardButtonTypeEnum() == tdlib.InlineKeyboardButtonTypeCallbackType {
 					btCallback := button.Type.(*tdlib.InlineKeyboardButtonTypeCallback)
 					bl.Add(

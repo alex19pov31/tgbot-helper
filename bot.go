@@ -38,6 +38,14 @@ func (b *Bot) SetMessage(message *MessageData) {
 	b.message = message
 }
 
+func (b *Bot) SetCommand(command *Command) {
+	if command == nil {
+		return
+	}
+
+	b.command = command
+}
+
 func (b *Bot) Client() *Client {
 	return b.client
 }

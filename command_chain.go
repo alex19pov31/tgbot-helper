@@ -1,7 +1,6 @@
 package tgbothelper
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -60,29 +59,22 @@ func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
 	return true
 }
 
-func (ce *СhainElement) run(client *tdlib.Client, text string, message *MessageData) bool {
-	fmt.Println("Проверка команды из цепочки:")
-	fmt.Println(ce.command)
+func (ce *СhainElement) run(client *tdlib.Client, text string, message *MessageData) *Command {
 	if !ce.isValid(text, message.Buttons) {
 		ce.countSkeep++
-		return false
+		return nil
 	}
 
-	fmt.Println("Отправка команды из цепочки:")
-	fmt.Println(ce.command)
-
 	if ce.button != nil {
-		(*ce.button).Click(client)
+		return (*ce.button).Click(client)
 	} else {
-		SendMessage(client, ce.command, message.ChatID, 0)
+		return SendMessage(client, ce.command, message.ChatID, 0)
 	}
 
 	ce.countSend++
 	ce.timeSend = time.Now()
 
-	fmt.Println("Команда отправлена")
-
-	return true
+	return nil
 }
 
 func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) {
@@ -100,62 +92,27 @@ type CommandChain struct {
 }
 
 // Run - запуск цепочки команд
-func (ch *CommandChain) Run(client *tdlib.Client, message *MessageData, initFunc routeCallback) bool {
+func (ch *CommandChain) Run(client *tdlib.Client, message *MessageData, initFunc routeCallback) *Command {
 	text := message.Message
 	if ch.finished {
-		return false
+		return nil
 	}
 
 	for _, command := range ch.commands {
-		if command.run(client, text, message) {
-			fmt.Println("COMAND SENDED:")
-
+		cmd := command.run(client, text, message)
+		if cmd != nil {
 			if command.button != nil && (*command.button).GetType() == CallbackButtonType {
-				fmt.Println("IsCallback!!!")
 				newMessage := GetMessageByID(client, message.ChatID, message.MessageID)
-				fmt.Println("NEW MESSAGE:")
-				fmt.Println(newMessage.Message)
-
 				initFunc(newMessage)
 			}
 
-			return true
+			return cmd
 		}
-		fmt.Println("Next command...")
 	}
 
 	ch.finished = true
-	return false
+	return nil
 }
-
-/*
-func (ch *CommandChain) RunCallback(client *tdlib.Client, message *MessageData, initFunc routeCallback) bool {
-	text := message.Message
-	if ch.finished {
-		return false
-	}
-
-	for _, command := range ch.commands {
-		if command.run(client, text, message) {
-			fmt.Println("Command is sended")
-			if command.isCallback() {
-				fmt.Println("IsCallback!!!")
-				time.Sleep(5 * time.Second)
-				newMessage := GetMessageByID(client, message.ChatID, message.MessageID)
-				fmt.Println("NEW MESSAGE:")
-				fmt.Println(newMessage.Message)
-
-				initFunc(newMessage)
-			}
-			return true
-		}
-		fmt.Println("Next command...")
-	}
-
-	ch.finished = true
-	return false
-}
-*/
 
 // ForseRun - принудительный запус команд
 func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) {

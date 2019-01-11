@@ -1,6 +1,8 @@
 package tgbothelper
 
 import (
+	"time"
+
 	"github.com/Arman92/go-tdlib"
 )
 
@@ -20,7 +22,7 @@ type Button interface {
 	GetType() string
 	GetChatID() int64
 	GetMessageID() int64
-	Click(client *tdlib.Client)
+	Click(client *tdlib.Client) *Command
 }
 
 type baseButton struct {
@@ -59,8 +61,8 @@ func (b *baseButton) GetMessageID() int64 {
 	return b.messageID
 }
 
-func (b *baseButton) Click(client *tdlib.Client) {
-	SendMessage(client, b.GetText(), b.GetChatID(), 0)
+func (b *baseButton) Click(client *tdlib.Client) *Command {
+	return SendMessage(client, b.GetText(), b.GetChatID(), 0)
 }
 
 // ShowKeyboardButton - клавиатурная кнопка
@@ -79,12 +81,18 @@ type CallbackButton struct {
 }
 
 // Click - клик по кнопке
-func (cb *CallbackButton) Click(client *tdlib.Client) {
+func (cb *CallbackButton) Click(client *tdlib.Client) *Command {
 	client.GetCallbackQueryAnswer(
 		cb.GetChatID(),
 		cb.GetMessageID(),
 		tdlib.NewCallbackQueryPayloadData([]byte(cb.GetData())),
 	)
+
+	return &Command{
+		request:    cb.GetData(),
+		isCallback: true,
+		timeSend:   time.Now(),
+	}
 }
 
 func newShowKeyboardButton(text string, chatID, messageID int64) *ShowKeyboardButton {
