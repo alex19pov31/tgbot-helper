@@ -8,6 +8,7 @@ import (
 
 var lastCommand = &Command{}
 
+// Command - отправленная команда
 type Command struct {
 	request          string
 	response         string
@@ -22,6 +23,7 @@ func (c *Command) isLock() bool {
 	return c.lockUntil.Unix() > time.Now().Unix()
 }
 
+// GetTimeSend - время отправки сообщения
 func (c *Command) GetTimeSend() time.Time {
 	return c.timeSend
 }
@@ -72,7 +74,7 @@ func SendCommand(client *tdlib.Client, text string, chatID int64) *Command {
 func SendMessage(client *tdlib.Client, text string, chatID, replyMessageID int64) *Command {
 	go func(client *tdlib.Client, text string, chatID, replyMessageID int64) {
 		inputMsgTxt := tdlib.NewInputMessageText(tdlib.NewFormattedText(text, nil), true, true)
-		//time.Sleep(2 * time.Second)
+		time.Sleep(7 * time.Second)
 		client.SendMessage(chatID, replyMessageID, false, true, nil, inputMsgTxt)
 	}(client, text, chatID, replyMessageID)
 

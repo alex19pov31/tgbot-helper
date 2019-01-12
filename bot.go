@@ -9,9 +9,13 @@ import (
 	"github.com/Arman92/go-tdlib"
 )
 
+// BotTimerFunc - обработчик таймера
 type BotTimerFunc func(t time.Time)
+
+// HandleCallback - обработчик
 type HandleCallback func()
 
+// Bot - tg бот
 type Bot struct {
 	client       *Client
 	message      *MessageData
@@ -34,10 +38,12 @@ func (b *Bot) init(APIID, APIHash, accountName string) {
 	b.commandChain = &CommandChain{}
 }
 
+// SetMessage - установить информацию о полученном сообщении
 func (b *Bot) SetMessage(message *MessageData) {
 	b.message = message
 }
 
+// SetCommand - установить информацию о отправленной команде
 func (b *Bot) SetCommand(command *Command) {
 	if command == nil {
 		return
@@ -46,10 +52,12 @@ func (b *Bot) SetCommand(command *Command) {
 	b.command = command
 }
 
+// Client - tg клиент
 func (b *Bot) Client() *Client {
 	return b.client
 }
 
+// Start - запуск бота
 func (b *Bot) Start() {
 	tdlib.SetLogVerbosityLevel(0)
 	//tdlib.SetFilePath("./errors.txt")
@@ -88,7 +96,7 @@ func (b *Bot) startBot(chBot chan *MessageData) {
 	}
 }
 
-// SendMessage -  отправить сообщение
+// SendCommand -  отправить сообщение
 func (b *Bot) SendCommand(text string, chatID, messageID int64) {
 	if b.command.isLock() {
 		return
@@ -112,27 +120,33 @@ func (b *Bot) GetMessage() *MessageData {
 	return b.message
 }
 
+// GetCommand - последняя отправленная комманда
 func (b *Bot) GetCommand() *Command {
 	return b.command
 }
 
+// GetCommandChain - последняя цепочка команд
 func (b *Bot) GetCommandChain() *CommandChain {
 	return b.commandChain
 }
 
+// NewCommandChain - новая цепочка команд
 func (b *Bot) NewCommandChain(id string, commands ...*СhainElement) *CommandChain {
 	b.commandChain = &CommandChain{id: id, commands: commands, created: time.Now()}
 	return b.commandChain
 }
 
+// SetHandleRoute - установить обработчк команд
 func (b *Bot) SetHandleRoute(initFunc routeCallback) {
 	b.handleRoute = initFunc
 }
 
+// SetHandleTimer - установить обработчик таймера
 func (b *Bot) SetHandleTimer(timerFunc BotTimerFunc) {
 	b.handleTimer = timerFunc
 }
 
+// SetHandleBoot - установить обработчик
 func (b *Bot) SetHandleBoot(bootFunc HandleCallback) {
 	b.handleBoot = bootFunc
 }

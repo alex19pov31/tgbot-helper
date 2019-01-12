@@ -11,6 +11,7 @@ type ButtonList struct {
 	buttons []Button
 }
 
+// GetList - список кнопок
 func (bl *ButtonList) GetList() []Button {
 	return bl.buttons
 }

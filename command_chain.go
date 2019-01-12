@@ -16,6 +16,7 @@ type СhainElement struct {
 	containButton     string
 	containButtonText string
 	callbackData      string
+	forseCommand      string
 	countSend         int
 	countSkeep        int
 	timeSend          time.Time
@@ -27,6 +28,11 @@ func (ce *СhainElement) isCallback() bool {
 }
 
 func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
+	if ce.forseCommand != "" {
+		ce.command = ce.forseCommand
+		return true
+	}
+
 	if ce.countSend > 0 || ce.countSkeep > 0 {
 		return false
 	}
@@ -67,14 +73,12 @@ func (ce *СhainElement) run(client *tdlib.Client, text string, message *Message
 
 	if ce.button != nil {
 		return (*ce.button).Click(client)
-	} else {
-		return SendMessage(client, ce.command, message.ChatID, 0)
 	}
 
 	ce.countSend++
 	ce.timeSend = time.Now()
 
-	return nil
+	return SendMessage(client, ce.command, message.ChatID, 0)
 }
 
 func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) {
@@ -143,8 +147,14 @@ func NewCommandButton(button string) *СhainElement {
 	return &СhainElement{command: button, containButton: button}
 }
 
+// NewContainTextButton - новый элемент цепочки команд (нажатие на кнопку по вхождению текста на кнопке)
 func NewContainTextButton(button string) *СhainElement {
 	return &СhainElement{containButtonText: button}
+}
+
+// NewForseCommand - выполнение команды без проверки
+func NewForseCommand(message string) *СhainElement {
+	return &СhainElement{forseCommand: message}
 }
 
 // NewCallbackButton - новый элемент цепочки команд (нажатие на кнопку)
