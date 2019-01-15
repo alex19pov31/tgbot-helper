@@ -28,13 +28,13 @@ func (ce *СhainElement) isCallback() bool {
 }
 
 func (ce *СhainElement) isValid(text string, buttons ButtonList) bool {
+	if ce.countSend > 0 || ce.countSkeep > 0 {
+		return false
+	}
+
 	if ce.forseCommand != "" {
 		ce.command = ce.forseCommand
 		return true
-	}
-
-	if ce.countSend > 0 || ce.countSkeep > 0 {
-		return false
 	}
 
 	if ce.containText != "" && !strings.Contains(text, ce.containText) {
@@ -81,10 +81,10 @@ func (ce *СhainElement) run(client *tdlib.Client, text string, message *Message
 	return SendMessage(client, ce.command, message.ChatID, 0)
 }
 
-func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) {
-	SendMessage(client, ce.command, chatID, 0)
+func (ce *СhainElement) forseRun(client *tdlib.Client, chatID int64) *Command {
 	ce.countSend++
 	ce.timeSend = time.Now()
+	return SendMessage(client, ce.command, chatID, 0)
 }
 
 // CommandChain - цепочка команд
@@ -119,15 +119,16 @@ func (ch *CommandChain) Run(client *tdlib.Client, message *MessageData, initFunc
 }
 
 // ForseRun - принудительный запус команд
-func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) {
+func (ch *CommandChain) ForseRun(client *tdlib.Client, chatID int64) *Command {
 	if ch.finished {
-		return
+		return nil
 	}
 
 	for _, command := range ch.commands {
-		command.forseRun(client, chatID)
-		return
+		return command.forseRun(client, chatID)
 	}
+
+	return nil
 }
 
 // GetCommandChain - текущая цепочка команд
